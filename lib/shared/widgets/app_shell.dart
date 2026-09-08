@@ -6,6 +6,7 @@ import 'package:window_manager/window_manager.dart';
 
 import '../../config/env/env_config.dart';
 import '../../features/company/presentation/widgets/company_selector_dropdown.dart';
+import '../../features/document_ocr/presentation/widgets/file_drop_zone.dart';
 
 const double _expandedSidebarWidth = 248;
 const double _collapsedSidebarWidth = 76;
@@ -819,6 +820,8 @@ class _DashboardView extends StatelessWidget {
               label: const Text('New workspace task'),
             ),
           ),
+          const SizedBox(height: 22),
+          const FileDropZone(),
           const SizedBox(height: 22),
           LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {

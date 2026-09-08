@@ -15,7 +15,7 @@ import 'tables.dart';
 class DatabaseService {
   DatabaseService({this.databaseName = 'finai_studio.db'});
 
-  static const int currentSchemaVersion = 2;
+  static const int currentSchemaVersion = 3;
 
   final String databaseName;
   Future<Database>? _databaseFuture;
@@ -121,6 +121,8 @@ class DatabaseService {
             'ALTER TABLE ${DatabaseTables.companies} '
             'ADD COLUMN tax_type TEXT NOT NULL DEFAULT \'VAT\'',
           );
+        case 3:
+          await _migrateDocumentsToVersion3(db);
         default:
           debugPrint(
             '[DatabaseService] No migration registered for schema version '
@@ -132,6 +134,22 @@ class DatabaseService {
     debugPrint(
       '[DatabaseService] Migrated schema from $oldVersion to $newVersion.',
     );
+  }
+
+  Future<void> _migrateDocumentsToVersion3(Database db) async {
+    const List<String> statements = <String>[
+      "ALTER TABLE ${DatabaseTables.documents} ADD COLUMN file_name TEXT NOT NULL DEFAULT ''",
+      'ALTER TABLE ${DatabaseTables.documents} ADD COLUMN vendor_name TEXT',
+      'ALTER TABLE ${DatabaseTables.documents} ADD COLUMN vendor_voen TEXT',
+      'ALTER TABLE ${DatabaseTables.documents} ADD COLUMN invoice_number TEXT',
+      'ALTER TABLE ${DatabaseTables.documents} ADD COLUMN issue_date TIMESTAMP',
+      'ALTER TABLE ${DatabaseTables.documents} ADD COLUMN subtotal REAL',
+      "ALTER TABLE ${DatabaseTables.documents} ADD COLUMN currency TEXT NOT NULL DEFAULT 'AZN'",
+      'ALTER TABLE ${DatabaseTables.documents} ADD COLUMN line_items_json TEXT',
+    ];
+    for (final String statement in statements) {
+      await db.execute(statement);
+    }
   }
 
   Future<void> _createSchema(Database db) async {

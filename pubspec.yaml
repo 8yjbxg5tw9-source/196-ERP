@@ -30,6 +30,10 @@ dependencies:
   google_fonts: ^8.2.1
   flutter_svg: ^2.3.0
 
+  # Desktop document ingestion.
+  file_picker: ^10.3.3
+  desktop_drop: ^0.8.4
+
   # Local persistence and secure credentials.
   shared_preferences: ^2.5.5
   flutter_secure_storage: ^11.0.0

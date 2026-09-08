@@ -11,11 +11,14 @@ import 'config/env/prod_env.dart';
 import 'core/database/database_service.dart';
 import 'core/network/api_client.dart';
 import 'core/network/network_info.dart';
+import 'core/services/ocr_service.dart';
 import 'core/storage/secure_storage_service.dart';
 import 'core/utils/constants.dart';
 import 'features/company/data/company_data.dart';
 import 'features/company/domain/company_domain.dart';
 import 'features/company/presentation/bloc/company_bloc.dart';
+import 'features/document_ocr/data/document_data.dart';
+import 'features/document_ocr/domain/document_domain.dart';
 
 /// Global, type-safe service locator.
 final GetIt sl = GetIt.instance;
@@ -82,6 +85,25 @@ Future<void> init({EnvConfig? environment}) async {
 
   if (!sl.isRegistered<DatabaseService>()) {
     sl.registerSingleton<DatabaseService>(DatabaseService());
+  }
+
+  if (!sl.isRegistered<OcrService>()) {
+    sl.registerLazySingleton<OcrService>(() => const MockOcrService());
+  }
+
+  if (!sl.isRegistered<DocumentLocalDataSource>()) {
+    sl.registerLazySingleton<DocumentLocalDataSource>(
+      () => DocumentLocalDataSourceImpl(sl<DatabaseService>()),
+    );
+  }
+
+  if (!sl.isRegistered<DocumentRepository>()) {
+    sl.registerLazySingleton<DocumentRepository>(
+      () => DocumentRepositoryImpl(
+        sl<DocumentLocalDataSource>(),
+        sl<OcrService>(),
+      ),
+    );
   }
 
   if (!sl.isRegistered<CompanyLocalDataSource>()) {
