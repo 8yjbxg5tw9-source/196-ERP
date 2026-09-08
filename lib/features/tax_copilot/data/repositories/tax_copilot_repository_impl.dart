@@ -9,6 +9,7 @@ import '../../domain/repositories/tax_copilot_repository.dart';
 import '../datasources/llm_remote_data_source.dart';
 import '../datasources/tax_copilot_local_data_source.dart';
 import '../models/tax_query_model.dart';
+import '../models/tax_rule_model.dart';
 
 /// Coordinates query embedding, local cosine retrieval, LLM grounding, and
 /// company-scoped query history.
@@ -198,6 +199,55 @@ class TaxCopilotRepositoryImpl implements TaxCopilotRepository {
         ),
       );
     }
+  }
+
+  @override
+  Future<Either<Failure, TaxRuleEntity?>> getTaxRuleByArticleCode(
+    String articleCode,
+  ) async {
+    final String normalizedArticleCode = _normalizeArticleCode(articleCode);
+    if (normalizedArticleCode.isEmpty) {
+      return Left<Failure, TaxRuleEntity?>(
+        const ValidationFailure(message: 'An article number is required.'),
+      );
+    }
+
+    try {
+      final TaxRuleModel? rule =
+          await _localDataSource.getTaxRuleByArticleCode(
+        normalizedArticleCode,
+      );
+      return Right<Failure, TaxRuleEntity?>(rule);
+    } on DatabaseException catch (error) {
+      return Left<Failure, TaxRuleEntity?>(
+        DatabaseFailure(
+          message: 'The cited tax article could not be loaded.',
+          cause: error,
+        ),
+      );
+    } on FormatException catch (error) {
+      return Left<Failure, TaxRuleEntity?>(
+        ParsingFailure(
+          message: 'The cited tax article contains invalid data.',
+          cause: error,
+        ),
+      );
+    } on Object catch (error) {
+      return Left<Failure, TaxRuleEntity?>(
+        CacheFailure(
+          message: 'The cited tax article could not be read locally.',
+          cause: error,
+        ),
+      );
+    }
+  }
+
+  static String _normalizeArticleCode(String value) {
+    final String normalized = value.trim();
+    if (normalized.toLowerCase().startsWith('article ')) {
+      return normalized.substring('article '.length).trim();
+    }
+    return normalized;
   }
 
   String _newQueryId() {

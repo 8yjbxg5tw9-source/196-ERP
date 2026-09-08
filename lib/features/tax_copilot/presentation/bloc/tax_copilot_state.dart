@@ -6,19 +6,26 @@ abstract class TaxCopilotState extends Equatable {
   const TaxCopilotState({
     this.history = const <TaxQueryEntity>[],
     this.currentQuery,
+    this.activeQuestion,
   });
 
   final List<TaxQueryEntity> history;
   final TaxQueryEntity? currentQuery;
+  final String? activeQuestion;
 
   @override
-  List<Object?> get props => <Object?>[history, currentQuery];
+  List<Object?> get props => <Object?>[
+        history,
+        currentQuery,
+        activeQuestion,
+      ];
 }
 
 class TaxCopilotInitial extends TaxCopilotState {
   const TaxCopilotInitial({
     super.history,
     super.currentQuery,
+    super.activeQuestion,
   });
 }
 
@@ -26,6 +33,7 @@ class TaxCopilotThinking extends TaxCopilotState {
   const TaxCopilotThinking({
     super.history,
     super.currentQuery,
+    super.activeQuestion,
   });
 }
 
@@ -46,6 +54,7 @@ class TaxCopilotFailure extends TaxCopilotState {
     this.message, {
     super.history,
     super.currentQuery,
+    super.activeQuestion,
   });
 
   final String message;

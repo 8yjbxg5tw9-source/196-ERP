@@ -50,3 +50,5 @@ dart run pdfx:install_windows
 ```
 
 The Tax Copilot uses a local SQLite `tax_rules` corpus, cosine-similarity retrieval, and a provider-neutral RAG prompt. OpenAI, Anthropic Claude, and local Ollama completion runners are supported; API keys are read from secure storage. Select a runner with the secure-storage key `llm_provider` (or use `--dart-define=LLM_PROVIDER=ollama` as the default). Supported values are `openai`, `anthropic`, and `ollama`. Without a configured provider, the offline fallback only quotes retrieved articles and records the question in the company-scoped `tax_queries` history.
+
+The desktop Tax Copilot workspace presents company-scoped conversation threads, quick filters, prompt templates, animated streaming-style Markdown rendering, a pulsing grounded-search indicator, and citation cards. Selecting a citation opens the complete article text from the local SQLite `tax_rules` corpus in a slide-over drawer.

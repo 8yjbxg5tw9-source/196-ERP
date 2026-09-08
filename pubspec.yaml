@@ -29,6 +29,7 @@ dependencies:
   # Presentation and typography.
   google_fonts: ^8.2.1
   flutter_svg: ^2.3.0
+  flutter_markdown: ^0.7.7+1
 
   # Desktop document ingestion.
   file_picker: ^10.3.3

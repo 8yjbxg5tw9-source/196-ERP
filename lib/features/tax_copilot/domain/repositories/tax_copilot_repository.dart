@@ -20,4 +20,8 @@ abstract interface class TaxCopilotRepository {
   );
 
   Future<Either<Failure, void>> clearQueryHistory(String companyId);
+
+  Future<Either<Failure, TaxRuleEntity?>> getTaxRuleByArticleCode(
+    String articleCode,
+  );
 }

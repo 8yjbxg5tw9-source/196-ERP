@@ -19,6 +19,8 @@ abstract interface class TaxCopilotLocalDataSource {
   Future<List<TaxQueryModel>> getQueryHistory(String companyId);
 
   Future<void> clearQueryHistory(String companyId);
+
+  Future<TaxRuleModel?> getTaxRuleByArticleCode(String articleCode);
 }
 
 class TaxCopilotLocalDataSourceImpl implements TaxCopilotLocalDataSource {
@@ -91,6 +93,21 @@ class TaxCopilotLocalDataSourceImpl implements TaxCopilotLocalDataSource {
       limit: 100,
     );
     return rows.map(TaxQueryModel.fromSqflite).toList(growable: false);
+  }
+
+  @override
+  Future<TaxRuleModel?> getTaxRuleByArticleCode(String articleCode) async {
+    final Database database = await _databaseService.database;
+    final List<Map<String, Object?>> rows = await database.query(
+      DatabaseTables.taxRules,
+      where: 'article_code = ?',
+      whereArgs: <Object?>[articleCode],
+      limit: 1,
+    );
+    if (rows.isEmpty) {
+      return null;
+    }
+    return TaxRuleModel.fromSqflite(rows.first);
   }
 
   @override
