@@ -309,7 +309,7 @@ $context''';
     Object payload,
     Map<String, String> headers,
   ) async {
-    final Response<Object?> response = await _apiClient.dio.post<Object?>(
+    final Response<Object?> response = await _apiClient.post<Object?>(
       endpoint.toString(),
       data: payload,
       options: Options(headers: headers),
