@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,8 +8,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'config/env/dev_env.dart';
 import 'config/env/env_config.dart';
 import 'config/env/prod_env.dart';
+import 'core/database/database_service.dart';
 import 'core/network/api_client.dart';
 import 'core/network/network_info.dart';
+import 'core/storage/secure_storage_service.dart';
 import 'core/utils/constants.dart';
 
 /// Global, type-safe service locator.
@@ -64,6 +67,22 @@ Future<void> init({EnvConfig? environment}) async {
     sl.registerLazySingleton<FlutterSecureStorage>(
       () => FlutterSecureStorage(),
     );
+  }
+
+  if (!sl.isRegistered<SecureStorageService>()) {
+    sl.registerSingleton<SecureStorageService>(
+      SecureStorageServiceImpl(sl<FlutterSecureStorage>()),
+    );
+  }
+
+  if (!sl.isRegistered<DatabaseService>()) {
+    sl.registerSingleton<DatabaseService>(DatabaseService());
+  }
+
+  // The relational implementation is available on desktop and mobile. Web
+  // can still boot and use the shell, but does not initialize native SQLite.
+  if (!kIsWeb) {
+    await sl<DatabaseService>().initialize();
   }
 
   if (!sl.isRegistered<SharedPreferences>()) {
