@@ -222,6 +222,7 @@ $context''';
             },
             _headers(selectedProvider, apiKey),
           );
+          break;
         case LlmProvider.anthropic:
           response = await _post(
             Uri.parse(
@@ -244,6 +245,7 @@ $context''';
               'anthropic-version': '2023-06-01',
             },
           );
+          break;
         case LlmProvider.ollama:
           response = await _post(
             Uri.parse('${_withoutTrailingSlash(ollamaBaseUrl)}/chat'),
@@ -260,6 +262,7 @@ $context''';
             },
             const <String, String>{'Content-Type': 'application/json'},
           );
+          break;
       }
 
       final String? answer = _answerFromResponse(response);

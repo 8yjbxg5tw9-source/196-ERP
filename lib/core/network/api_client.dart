@@ -194,6 +194,7 @@ class ApiClient {
             cause: error,
           );
         }
+        break;
     }
 
     if (_isTransportFailure(error)) {

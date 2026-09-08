@@ -35,6 +35,23 @@ dependencies:
   flutter_svg: ^2.3.0
   flutter_markdown: ^0.7.7+1
 
+  # Financial report generation.
+  pdf: ^3.11.3
+  printing: ^5.13.4
+
+  # Interactive executive dashboard charts.
+  fl_chart: ^0.69.0
+
+  # Official tax declaration XML serialization.
+  xml: ^6.5.0
+
+  # Local password hashing (PBKDF2-HMAC-SHA256).
+  crypto: ^3.0.6
+
+  # Encrypted backup archives (ZIP compression + AES-256-GCM).
+  archive: ^3.6.1
+  encrypt: ^5.0.3
+
   # Desktop document ingestion.
   file_picker: ^10.3.3
   desktop_drop: ^0.8.4
@@ -48,6 +65,13 @@ dependencies:
 
   # Desktop window lifecycle, sizing, and custom title bars.
   window_manager: ^0.5.2
+
+  # Windows system tray and desktop toast notifications.
+  system_tray: ^2.0.3
+
+  # Global keyboard shortcuts.
+  hotkey_manager: ^0.2.3
+  local_notifier: ^0.1.6
 
   # Local relational storage and cross-platform database paths.
   sqflite: ^2.4.3
@@ -63,5 +87,22 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
 
+  # Windows MSIX installer packaging.
+  msix: ^3.18.0
+
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icons/
+
+# Enterprise Windows installer branding, protocol handler, and file
+# association bindings (Step 40). Build with `dart run msix:create`.
+msix_config:
+  display_name: FinAI Studio
+  publisher_display_name: FinAI Studio Systems LLC
+  identity_name: com.finaistudio.desktop
+  msix_version: 1.0.0.0
+  logo_path: assets/icons/app_logo.png
+  capabilities: internetClient, runFullTrust
+  file_extension: .finai
+  protocol_activation: finai

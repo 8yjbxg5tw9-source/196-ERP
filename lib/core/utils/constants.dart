@@ -1,3 +1,7 @@
+/// Whether the current binary is a release (AOT) build. Used to disable
+/// verbose logging and to surface the build channel in diagnostics.
+const bool kProductBuild = bool.fromEnvironment('dart.vm.product');
+
 /// Stable application constants shared by infrastructure and features.
 abstract final class AppConstants {
   static const String appName = 'FinAI Studio';

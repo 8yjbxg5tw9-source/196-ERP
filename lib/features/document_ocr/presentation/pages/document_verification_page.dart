@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../injection_container.dart';
+import '../../../currency/presentation/widgets/base_currency_equivalent.dart';
+import '../../../currency/presentation/widgets/currency_amount_field.dart';
 import '../../domain/entities/document_entity.dart';
 import '../../domain/entities/invoice_item_entity.dart';
 import '../../domain/repositories/document_repository.dart';
@@ -565,6 +567,7 @@ class _VerificationFormState extends State<_VerificationForm> {
                 const SizedBox(height: 10),
                 _LineItemsGrid(
                   items: document.lineItems,
+                  currency: document.currency,
                   enabled: !widget.saving,
                   onChanged: (int index, InvoiceItemEntity item) => bloc.add(
                     UpdateLineItem(index: index, item: item),
@@ -645,12 +648,14 @@ class _VerificationFormState extends State<_VerificationForm> {
 class _LineItemsGrid extends StatelessWidget {
   const _LineItemsGrid({
     required this.items,
+    required this.currency,
     required this.enabled,
     required this.onChanged,
     required this.onRemove,
   });
 
   final List<InvoiceItemEntity> items;
+  final String currency;
   final bool enabled;
   final void Function(int index, InvoiceItemEntity item) onChanged;
   final ValueChanged<int> onRemove;
@@ -679,6 +684,7 @@ class _LineItemsGrid extends StatelessWidget {
                   items[index].id.isEmpty ? 'row-$index' : items[index].id,
                 ),
                 item: items[index],
+                currency: currency,
                 index: index,
                 enabled: enabled,
                 onChanged: onChanged,
@@ -710,7 +716,7 @@ class _LineItemHeader extends StatelessWidget {
           const SizedBox(width: 7),
           SizedBox(width: 66, child: Text('Qty', style: style)),
           const SizedBox(width: 7),
-          SizedBox(width: 92, child: Text('Unit price', style: style)),
+          SizedBox(width: 186, child: Text('Unit price', style: style)),
           const SizedBox(width: 7),
           SizedBox(width: 72, child: Text('VAT %', style: style)),
           const SizedBox(width: 7),
@@ -725,6 +731,7 @@ class _LineItemHeader extends StatelessWidget {
 class _LineItemRow extends StatefulWidget {
   const _LineItemRow({
     required this.item,
+    required this.currency,
     required this.index,
     required this.enabled,
     required this.onChanged,
@@ -733,6 +740,7 @@ class _LineItemRow extends StatefulWidget {
   });
 
   final InvoiceItemEntity item;
+  final String currency;
   final int index;
   final bool enabled;
   final void Function(int index, InvoiceItemEntity item) onChanged;
@@ -745,7 +753,6 @@ class _LineItemRow extends StatefulWidget {
 class _LineItemRowState extends State<_LineItemRow> {
   late final TextEditingController _descriptionController;
   late final TextEditingController _quantityController;
-  late final TextEditingController _unitPriceController;
   late final TextEditingController _vatController;
 
   @override
@@ -753,7 +760,6 @@ class _LineItemRowState extends State<_LineItemRow> {
     super.initState();
     _descriptionController = TextEditingController(text: widget.item.description);
     _quantityController = TextEditingController(text: _number(widget.item.quantity));
-    _unitPriceController = TextEditingController(text: _number(widget.item.unitPrice));
     _vatController = TextEditingController(text: _number(widget.item.vatRate));
   }
 
@@ -763,11 +769,9 @@ class _LineItemRowState extends State<_LineItemRow> {
     if (oldWidget.item.id != widget.item.id) {
       _descriptionController.text = widget.item.description;
       _quantityController.text = _number(widget.item.quantity);
-      _unitPriceController.text = _number(widget.item.unitPrice);
       _vatController.text = _number(widget.item.vatRate);
     } else {
       _syncNumeric(_quantityController, widget.item.quantity);
-      _syncNumeric(_unitPriceController, widget.item.unitPrice);
       _syncNumeric(_vatController, widget.item.vatRate);
     }
   }
@@ -776,7 +780,6 @@ class _LineItemRowState extends State<_LineItemRow> {
   void dispose() {
     _descriptionController.dispose();
     _quantityController.dispose();
-    _unitPriceController.dispose();
     _vatController.dispose();
     super.dispose();
   }
@@ -792,15 +795,19 @@ class _LineItemRowState extends State<_LineItemRow> {
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Expanded(
             flex: 6,
-            child: _cellField(
-              controller: _descriptionController,
-              enabled: widget.enabled,
-              onChanged: (String value) => widget.onChanged(
-                widget.index,
-                widget.item.copyWith(description: value),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: _cellField(
+                controller: _descriptionController,
+                enabled: widget.enabled,
+                onChanged: (String value) => widget.onChanged(
+                  widget.index,
+                  widget.item.copyWith(description: value),
+                ),
               ),
             ),
           ),
@@ -822,18 +829,22 @@ class _LineItemRowState extends State<_LineItemRow> {
           ),
           const SizedBox(width: 7),
           SizedBox(
-            width: 92,
-            child: _cellField(
-              controller: _unitPriceController,
+            width: 186,
+            child: CurrencyAmountField(
+              label: 'Unit price',
+              initialAmount: widget.item.unitPrice,
+              initialCurrency: widget.item.currency.isEmpty
+                  ? widget.currency
+                  : widget.item.currency,
               enabled: widget.enabled,
-              numeric: true,
-              onChanged: (String value) {
-                final double parsed = _parseNumber(value) ?? 0;
-                widget.onChanged(
-                  widget.index,
-                  widget.item.copyWith(unitPrice: parsed),
-                );
-              },
+              onAmountChanged: (double value) => widget.onChanged(
+                widget.index,
+                widget.item.copyWith(unitPrice: value),
+              ),
+              onCurrencyChanged: (String value) => widget.onChanged(
+                widget.index,
+                widget.item.copyWith(currency: value),
+              ),
             ),
           ),
           const SizedBox(width: 7),
@@ -855,12 +866,15 @@ class _LineItemRowState extends State<_LineItemRow> {
           const SizedBox(width: 7),
           SizedBox(
             width: 88,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                AppFormatters.decimal(widget.item.lineTotal),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  AppFormatters.decimal(widget.item.lineTotal),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
@@ -929,30 +943,40 @@ class _SummaryCard extends StatelessWidget {
         border: Border.all(color: theme.colorScheme.secondary.withAlpha(80)),
         borderRadius: BorderRadius.circular(9),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Expanded(
-            child: _SummaryValue(
-              label: 'Subtotal',
-              value: document.subtotal ?? 0,
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _SummaryValue(
+                  label: 'Subtotal',
+                  value: document.subtotal ?? 0,
+                  currency: document.currency,
+                ),
+              ),
+              Expanded(
+                child: _SummaryValue(
+                  label: 'Total VAT',
+                  value: document.vatAmount ?? 0,
+                  currency: document.currency,
+                ),
+              ),
+              Expanded(
+                child: _SummaryValue(
+                  label: 'Grand total',
+                  value: document.totalAmount ?? 0,
+                  currency: document.currency,
+                  emphasized: true,
+                ),
+              ),
+            ],
+          ),
+          if (document.currency.toUpperCase() != 'AZN')
+            BaseCurrencyEquivalent(
+              amount: document.totalAmount ?? 0,
               currency: document.currency,
             ),
-          ),
-          Expanded(
-            child: _SummaryValue(
-              label: 'Total VAT',
-              value: document.vatAmount ?? 0,
-              currency: document.currency,
-            ),
-          ),
-          Expanded(
-            child: _SummaryValue(
-              label: 'Grand total',
-              value: document.totalAmount ?? 0,
-              currency: document.currency,
-              emphasized: true,
-            ),
-          ),
         ],
       ),
     );

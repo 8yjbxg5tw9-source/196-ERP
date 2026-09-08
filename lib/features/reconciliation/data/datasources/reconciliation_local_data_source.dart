@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:sqflite/sqflite.dart';
 
 import '../../../../core/database/database_service.dart';
@@ -13,6 +15,14 @@ abstract interface class ReconciliationLocalDataSource {
 
   /// Updates every reconciliation column in one SQLite transaction.
   Future<void> updateTransaction(BankTransactionModel transaction);
+
+  /// Replaces a parent transaction with its split children atomically.
+  Future<void> replaceTransactionWithChildren(
+    String transactionId,
+    List<BankTransactionModel> children,
+  );
+
+  Future<void> writeAuditLog({required String action, required String details});
 }
 
 class ReconciliationLocalDataSourceImpl
@@ -78,5 +88,56 @@ class ReconciliationLocalDataSourceImpl
         throw StateError('Unknown bank transaction: ${transaction.id}');
       }
     });
+  }
+
+  @override
+  Future<void> replaceTransactionWithChildren(
+    String transactionId,
+    List<BankTransactionModel> children,
+  ) async {
+    final Database database = await _databaseService.database;
+    await database.transaction((Transaction databaseTransaction) async {
+      await databaseTransaction.delete(
+        DatabaseTables.transactions,
+        where: 'id = ?',
+        whereArgs: <Object?>[transactionId],
+      );
+      for (final BankTransactionModel child in children) {
+        await databaseTransaction.insert(
+          DatabaseTables.transactions,
+          child.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+  }
+
+  @override
+  Future<void> writeAuditLog({
+    required String action,
+    required String details,
+  }) async {
+    final Database database = await _databaseService.database;
+    final DateTime now = DateTime.now().toUtc();
+    await database.insert(
+      DatabaseTables.auditLogs,
+      <String, Object?>{
+        'id': 'audit-${now.microsecondsSinceEpoch}',
+        'company_id': null,
+        'user_id': '',
+        'user_name': 'System',
+        'user_role': 'system',
+        'entity_name': 'reconciliation',
+        'entity_id': null,
+        'action': action,
+        'timestamp': now.toIso8601String(),
+        'before_state': null,
+        'after_state': jsonEncode(<String, dynamic>{
+          'summary': details,
+        }),
+        'ip_address': null,
+      },
+      conflictAlgorithm: ConflictAlgorithm.abort,
+    );
   }
 }

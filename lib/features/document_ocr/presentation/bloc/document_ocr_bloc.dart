@@ -74,30 +74,35 @@ class DocumentOcrBloc extends Bloc<DocumentOcrEvent, DocumentOcrState> {
             _copyDocument(document, invoiceNumber: _stringOrNull(value)),
           ),
         );
+        break;
       case DocumentField.vendorName:
         emit(
           DocumentLoaded(
             _copyDocument(document, vendorName: _stringOrNull(value)),
           ),
         );
+        break;
       case DocumentField.vendorVoen:
         emit(
           DocumentLoaded(
             _copyDocument(document, vendorVoen: _stringOrNull(value)),
           ),
         );
+        break;
       case DocumentField.issueDate:
         emit(
           DocumentLoaded(
             _copyDocument(document, issueDate: _dateOrNull(value)),
           ),
         );
+        break;
       case DocumentField.dueDate:
         emit(
           DocumentLoaded(
             _copyDocument(document, dueDate: _dateOrNull(value)),
           ),
         );
+        break;
       case DocumentField.currency:
         emit(
           DocumentLoaded(
@@ -107,6 +112,7 @@ class DocumentOcrBloc extends Bloc<DocumentOcrEvent, DocumentOcrState> {
             ),
           ),
         );
+        break;
     }
   }
 
@@ -120,7 +126,7 @@ class DocumentOcrBloc extends Bloc<DocumentOcrEvent, DocumentOcrState> {
     }
 
     final InvoiceItemEntity item = _normalizeItem(
-      event.item ?? _newLineItem(),
+      event.item ?? _newLineItem(document.currency),
     );
     final List<InvoiceItemEntity> items = <InvoiceItemEntity>[
       ...document.lineItems,
@@ -234,12 +240,15 @@ class DocumentOcrBloc extends Bloc<DocumentOcrEvent, DocumentOcrState> {
         item.unitPrice.isFinite && item.unitPrice >= 0 ? item.unitPrice : 0;
     final double vatRate =
         item.vatRate.isFinite && item.vatRate >= 0 ? item.vatRate : 0;
+    final String currency =
+        item.currency.trim().isEmpty ? 'AZN' : item.currency.trim();
     return item.copyWith(
       id: item.id.trim().isEmpty ? _newLineItemId() : item.id,
       quantity: quantity,
       unitPrice: unitPrice,
       vatRate: vatRate,
       lineTotal: quantity * unitPrice,
+      currency: currency,
     );
   }
 
@@ -256,7 +265,7 @@ class DocumentOcrBloc extends Bloc<DocumentOcrEvent, DocumentOcrState> {
     }).toList(growable: false);
   }
 
-  InvoiceItemEntity _newLineItem() {
+  InvoiceItemEntity _newLineItem(String currency) {
     return InvoiceItemEntity(
       id: _newLineItemId(),
       description: 'New item',
@@ -264,6 +273,7 @@ class DocumentOcrBloc extends Bloc<DocumentOcrEvent, DocumentOcrState> {
       unitPrice: 0,
       lineTotal: 0,
       vatRate: 0,
+      currency: currency.trim().isEmpty ? 'AZN' : currency.trim(),
     );
   }
 

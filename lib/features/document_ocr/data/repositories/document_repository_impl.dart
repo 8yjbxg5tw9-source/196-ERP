@@ -9,7 +9,6 @@ import 'package:sqflite/sqflite.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/services/ocr_service.dart';
 import '../../domain/entities/document_entity.dart';
-import '../../domain/entities/invoice_item_entity.dart';
 import '../../domain/repositories/document_repository.dart';
 import '../datasources/document_local_data_source.dart';
 import '../models/document_model.dart';
@@ -192,33 +191,7 @@ class DocumentRepositoryImpl implements DocumentRepository {
       final DocumentModel approved = model
           .withVerificationData()
           .withStatus(DocumentStatus.completed);
-      await _localDataSource.saveApprovedDocument(
-        approved,
-        auditDetails: <String, dynamic>{
-          'documentId': approved.id,
-          'companyId': approved.companyId,
-          'status': approved.status.name,
-          'fileName': approved.fileName,
-          'invoiceNumber': approved.invoiceNumber,
-          'vendorVoen': approved.vendorVoen,
-          'issueDate': approved.issueDate?.toUtc().toIso8601String(),
-          'dueDate': approved.dueDate?.toUtc().toIso8601String(),
-          'subtotal': approved.subtotal,
-          'vatAmount': approved.vatAmount,
-          'totalAmount': approved.totalAmount,
-          'currency': approved.currency,
-          'lineItems': approved.lineItems
-              .map((InvoiceItemEntity item) => <String, dynamic>{
-                    'id': item.id,
-                    'description': item.description,
-                    'quantity': item.quantity,
-                    'unitPrice': item.unitPrice,
-                    'vatRate': item.vatRate,
-                    'lineTotal': item.lineTotal,
-                  })
-              .toList(growable: false),
-        },
-      );
+      await _localDataSource.saveApprovedDocument(approved);
       return Right<Failure, DocumentEntity>(approved);
     } on DatabaseException catch (error) {
       return Left<Failure, DocumentEntity>(

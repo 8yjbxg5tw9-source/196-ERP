@@ -3,6 +3,8 @@ import 'package:sqflite/sqflite.dart';
 import '../../../../core/database/database_service.dart';
 import '../../../../core/database/tables.dart';
 import '../../../../core/storage/secure_storage_service.dart';
+import '../../../analytics/data/datasources/chart_of_accounts_seeder.dart';
+import '../../../analytics/data/models/account_model.dart';
 import '../models/company_model.dart';
 
 /// Local persistence boundary for company records and active context.
@@ -37,11 +39,22 @@ class CompanyLocalDataSourceImpl implements CompanyLocalDataSource {
   @override
   Future<CompanyModel> createCompany(CompanyModel company) async {
     final Database database = await _databaseService.database;
-    await database.insert(
-      DatabaseTables.companies,
-      company.toSqflite(),
-      conflictAlgorithm: ConflictAlgorithm.abort,
-    );
+    await database.transaction((Transaction transaction) async {
+      await transaction.insert(
+        DatabaseTables.companies,
+        company.toSqflite(),
+        conflictAlgorithm: ConflictAlgorithm.abort,
+      );
+      // Seed the standard chart of accounts together with the company profile
+      // so every workspace starts with a reportable ledger structure.
+      for (final account in ChartOfAccountsSeeder.defaultAccounts(company.id)) {
+        await transaction.insert(
+          DatabaseTables.accounts,
+          AccountModel.fromEntity(account).toMap(),
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+      }
+    });
     return company;
   }
 

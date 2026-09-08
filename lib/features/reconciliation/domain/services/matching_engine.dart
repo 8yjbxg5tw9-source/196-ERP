@@ -82,6 +82,36 @@ class MatchingEngine {
     return matchTransactions(transactions, approvedDocuments);
   }
 
+  /// Ranks every eligible document for a single transaction by confidence.
+  ///
+  /// Unlike [matchTransactions], this does not reserve documents, so the
+  /// reconciliation workspace can highlight the top candidates for the row an
+  /// accountant has selected without mutating shared state.
+  List<DocumentMatch> rankCandidates(
+    BankTransactionEntity transaction,
+    Iterable<DocumentEntity> documents,
+  ) {
+    final List<DocumentMatch> ranked = <DocumentMatch>[];
+    for (final DocumentEntity document in documents) {
+      if (!_isMatchableDocument(document) ||
+          document.totalAmount == null ||
+          !document.totalAmount!.isFinite) {
+        continue;
+      }
+      final double? confidence = _confidenceFor(transaction, document);
+      if (confidence != null) {
+        ranked.add(
+          DocumentMatch(document: document, confidence: confidence),
+        );
+      }
+    }
+    ranked.sort(
+      (DocumentMatch left, DocumentMatch right) =>
+          right.confidence.compareTo(left.confidence),
+    );
+    return ranked;
+  }
+
   /// Returns the normalized fuzzy similarity used by the 0.85 confidence tier.
   double nameSimilarity(String? left, String? right) {
     final String normalizedLeft = _normalizeText(left);
@@ -115,31 +145,38 @@ class MatchingEngine {
     );
 
     for (final DocumentEntity document in available) {
-      if (_hasExactVoen(transaction, document) &&
-          _hasExactAmount(transaction, document)) {
-        return _MatchDecision(document: document, confidence: 1.0);
+      final double? confidence = _confidenceFor(transaction, document);
+      if (confidence != null) {
+        return _MatchDecision(document: document, confidence: confidence);
       }
     }
+    return null;
+  }
 
-    for (final DocumentEntity document in available) {
-      final DateTime? documentDate = document.issueDate ?? document.createdAt;
-      if (_hasExactAmount(transaction, document) &&
-          documentDate != null &&
-          transaction.transactionDate
-                  .difference(documentDate)
-                  .abs() <=
-              dateWindow &&
-          nameSimilarity(transaction.counterpartyName, document.vendorName) >=
-              fuzzyNameThreshold) {
-        return _MatchDecision(document: document, confidence: 0.85);
-      }
+  /// Returns the tiered confidence for one transaction/document pair, or
+  /// `null` when no heuristic matches.
+  double? _confidenceFor(
+    BankTransactionEntity transaction,
+    DocumentEntity document,
+  ) {
+    if (_hasExactVoen(transaction, document) &&
+        _hasExactAmount(transaction, document)) {
+      return 1.0;
     }
 
-    for (final DocumentEntity document in available) {
-      if (_hasExactAmount(transaction, document) &&
-          _hasReference(transaction, document)) {
-        return _MatchDecision(document: document, confidence: 0.60);
-      }
+    final DateTime? documentDate = document.issueDate ?? document.createdAt;
+    if (_hasExactAmount(transaction, document) &&
+        documentDate != null &&
+        transaction.transactionDate.difference(documentDate).abs() <=
+            dateWindow &&
+        nameSimilarity(transaction.counterpartyName, document.vendorName) >=
+            fuzzyNameThreshold) {
+      return 0.85;
+    }
+
+    if (_hasExactAmount(transaction, document) &&
+        _hasReference(transaction, document)) {
+      return 0.60;
     }
     return null;
   }
@@ -254,6 +291,17 @@ class MatchingEngine {
 
 class _MatchDecision {
   const _MatchDecision({
+    required this.document,
+    required this.confidence,
+  });
+
+  final DocumentEntity document;
+  final double confidence;
+}
+
+/// A candidate invoice together with the confidence the engine assigned it.
+class DocumentMatch {
+  const DocumentMatch({
     required this.document,
     required this.confidence,
   });

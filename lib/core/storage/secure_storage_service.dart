@@ -10,6 +10,9 @@ abstract final class SecureStorageKeys {
   static const String llmProvider = 'llm_provider';
   static const String databaseEncryptionKey = 'database_encryption_key';
   static const String activeCompanyId = 'active_company_id';
+  static const String authSessionToken = 'auth_session_token';
+  static const String authUserId = 'auth_user_id';
+  static const String authSessionSecret = 'auth_session_secret';
 }
 
 /// Platform-agnostic contract for sensitive key-value data.

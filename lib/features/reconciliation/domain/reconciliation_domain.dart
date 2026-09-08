@@ -1,4 +1,10 @@
+export 'entities/anomaly_alert_entity.dart';
 export 'entities/bank_statement_entity.dart';
 export 'entities/bank_transaction_entity.dart';
+export 'entities/split_allocation.dart';
 export 'repositories/reconciliation_repository.dart';
+export 'rules/reconciliation_rule_entity.dart';
+export 'rules/rule_matching_evaluator.dart';
+export 'rules/rule_repository.dart';
+export 'services/anomaly_detection_engine.dart';
 export 'services/matching_engine.dart';

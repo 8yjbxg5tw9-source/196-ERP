@@ -8,6 +8,7 @@ class InvoiceItemEntity extends Equatable {
     required this.unitPrice,
     required this.lineTotal,
     required this.vatRate,
+    this.currency = 'AZN',
     this.id = '',
   });
 
@@ -18,6 +19,9 @@ class InvoiceItemEntity extends Equatable {
   final double lineTotal;
   final double vatRate;
 
+  /// The line's own currency, defaulting to the accounting base `AZN`.
+  final String currency;
+
   InvoiceItemEntity copyWith({
     String? id,
     String? description,
@@ -25,6 +29,7 @@ class InvoiceItemEntity extends Equatable {
     double? unitPrice,
     double? lineTotal,
     double? vatRate,
+    String? currency,
   }) {
     return InvoiceItemEntity(
       id: id ?? this.id,
@@ -33,6 +38,7 @@ class InvoiceItemEntity extends Equatable {
       unitPrice: unitPrice ?? this.unitPrice,
       lineTotal: lineTotal ?? this.lineTotal,
       vatRate: vatRate ?? this.vatRate,
+      currency: currency ?? this.currency,
     );
   }
 
@@ -44,5 +50,6 @@ class InvoiceItemEntity extends Equatable {
         unitPrice,
         lineTotal,
         vatRate,
+        currency,
       ];
 }

@@ -308,6 +308,7 @@ class DocumentModel extends DocumentEntity {
       'unit_price': item.unitPrice,
       'line_total': item.lineTotal,
       'vat_rate': item.vatRate,
+      'currency': item.currency,
     };
   }
 
@@ -360,6 +361,11 @@ class DocumentModel extends DocumentEntity {
         map,
         <String>['vatRate', 'vat_rate'],
         fallback: 0,
+      ),
+      currency: _readString(
+        map,
+        <String>['currency'],
+        fallback: 'AZN',
       ),
     );
   }
