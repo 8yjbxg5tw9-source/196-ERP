@@ -1,0 +1,46 @@
+name: finai_studio
+description: Enterprise-grade AI financial and accounting platform.
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.7.0 <4.0.0'
+  flutter: '>=3.29.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management and value equality.
+  flutter_bloc: ^9.1.1
+  equatable: ^2.1.0
+
+  # Dependency injection.
+  get_it: ^9.2.1
+  injectable: ^3.0.0
+
+  # Networking and connectivity.
+  dio: ^5.11.1
+  connectivity_plus: ^7.3.1
+
+  # Functional error handling.
+  dartz: ^0.10.1
+
+  # Presentation and typography.
+  google_fonts: ^8.2.1
+  flutter_svg: ^2.3.0
+
+  # Local persistence and secure credentials.
+  shared_preferences: ^2.5.5
+  flutter_secure_storage: ^11.0.0
+
+  # Locale-aware number and date formatting.
+  intl: ^0.20.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
