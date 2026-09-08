@@ -11,6 +11,7 @@ FinAI Studio is an enterprise-grade AI financial and accounting platform built w
 - `lib/injection_container.dart` — explicit GetIt registrations, environment-aware infrastructure, database initialization, and secure storage setup.
 - `lib/core/database/` — versioned offline-first SQLite service and relational schema for companies, documents, transactions, tax rules, and audit logs.
 - `lib/core/storage/` — platform-backed encrypted key-value storage for tokens, AI keys, and database key material.
+- `lib/core/network/` — connectivity-gated Dio client with secure auth headers, masked debug logging, exponential retries, and normalized domain failures.
 - `window_manager` — desktop window sizing, custom title bar behavior, native controls, and lifecycle hooks.
 
 ## Run

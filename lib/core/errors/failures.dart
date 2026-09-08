@@ -25,6 +25,46 @@ class ServerFailure extends Failure {
   List<Object?> get props => <Object?>[message, statusCode, cause];
 }
 
+class UnauthenticatedFailure extends Failure {
+  const UnauthenticatedFailure({
+    String message = 'Authentication is required to complete this request.',
+    this.statusCode,
+    Object? cause,
+  }) : super(message: message, cause: cause);
+
+  final int? statusCode;
+
+  @override
+  List<Object?> get props => <Object?>[message, statusCode, cause];
+}
+
+class NotFoundFailure extends Failure {
+  const NotFoundFailure({
+    String message = 'The requested resource could not be found.',
+    Object? cause,
+  }) : super(message: message, cause: cause);
+}
+
+class ValidationFailure extends Failure {
+  const ValidationFailure({
+    required String message,
+    Object? cause,
+  }) : super(message: message, cause: cause);
+}
+
+class RateLimitExceededFailure extends Failure {
+  const RateLimitExceededFailure({
+    String message = 'Too many requests. Please try again later.',
+    this.retryAfter,
+    Object? cause,
+  }) : super(message: message, cause: cause);
+
+  final Duration? retryAfter;
+
+  @override
+  List<Object?> get props => <Object?>[message, retryAfter, cause];
+}
+
 class CacheFailure extends Failure {
   const CacheFailure({
     String message = 'A cache error occurred.',

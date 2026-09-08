@@ -39,27 +39,17 @@ Future<void> init({EnvConfig? environment}) async {
           headers: <String, String>{'Accept': 'application/json'},
         ),
       );
-
-      if (config.enableLogging) {
-        dio.interceptors.add(
-          LogInterceptor(requestBody: false, responseBody: false),
-        );
-      }
       return dio;
     });
   }
 
-  if (!sl.isRegistered<ApiClient>()) {
-    sl.registerLazySingleton<ApiClient>(() => ApiClient(sl<Dio>()));
-  }
-
   if (!sl.isRegistered<Connectivity>()) {
-    sl.registerLazySingleton<Connectivity>(() => Connectivity());
+    sl.registerSingleton<Connectivity>(Connectivity());
   }
 
   if (!sl.isRegistered<NetworkInfo>()) {
-    sl.registerLazySingleton<NetworkInfo>(
-      () => NetworkInfoImpl(sl<Connectivity>()),
+    sl.registerSingleton<NetworkInfo>(
+      NetworkInfoImpl(sl<Connectivity>()),
     );
   }
 
@@ -75,6 +65,18 @@ Future<void> init({EnvConfig? environment}) async {
     );
   }
 
+  if (!sl.isRegistered<ApiClient>()) {
+    sl.registerSingleton<ApiClient>(
+      ApiClient(
+        sl<Dio>(),
+        secureStorage: sl<SecureStorageService>(),
+        networkInfo: sl<NetworkInfo>(),
+        enableLogging: kDebugMode && sl<EnvConfig>().enableLogging,
+      ),
+    );
+  }
+  await _logInitialConnectivity();
+
   if (!sl.isRegistered<DatabaseService>()) {
     sl.registerSingleton<DatabaseService>(DatabaseService());
   }
@@ -88,6 +90,19 @@ Future<void> init({EnvConfig? environment}) async {
   if (!sl.isRegistered<SharedPreferences>()) {
     final SharedPreferences preferences = await SharedPreferences.getInstance();
     sl.registerSingleton<SharedPreferences>(preferences);
+  }
+}
+
+Future<void> _logInitialConnectivity() async {
+  if (!kDebugMode) {
+    return;
+  }
+
+  try {
+    final bool connected = await sl<NetworkInfo>().isConnected;
+    debugPrint('[NetworkInfo] Initial connectivity: $connected');
+  } on Object catch (error) {
+    debugPrint('[NetworkInfo] Initial connectivity check unavailable: $error');
   }
 }
 
