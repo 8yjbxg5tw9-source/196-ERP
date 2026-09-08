@@ -15,7 +15,7 @@ import 'tables.dart';
 class DatabaseService {
   DatabaseService({this.databaseName = 'finai_studio.db'});
 
-  static const int currentSchemaVersion = 5;
+  static const int currentSchemaVersion = 6;
 
   final String databaseName;
   Future<Database>? _databaseFuture;
@@ -127,6 +127,8 @@ class DatabaseService {
           await _migrateDocumentsToVersion4(db);
         case 5:
           await _migrateTaxCopilotToVersion5(db);
+        case 6:
+          await _migrateReconciliationToVersion6(db);
         default:
           debugPrint(
             '[DatabaseService] No migration registered for schema version '
@@ -179,6 +181,33 @@ class DatabaseService {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_tax_queries_company_timestamp '
       'ON ${DatabaseTables.taxQueries} (company_id, timestamp)',
+    );
+  }
+
+  Future<void> _migrateReconciliationToVersion6(Database db) async {
+    const List<String> statements = <String>[
+      'ALTER TABLE ${DatabaseTables.transactions} ADD COLUMN counterparty_name TEXT',
+      'ALTER TABLE ${DatabaseTables.transactions} ADD COLUMN counterparty_voen TEXT',
+      'ALTER TABLE ${DatabaseTables.transactions} ADD COLUMN reference_code TEXT',
+      "ALTER TABLE ${DatabaseTables.transactions} ADD COLUMN transaction_type TEXT NOT NULL DEFAULT 'debit' CHECK (transaction_type IN ('credit', 'debit'))",
+      'ALTER TABLE ${DatabaseTables.transactions} ADD COLUMN match_confidence REAL NOT NULL DEFAULT 0 CHECK (match_confidence >= 0 AND match_confidence <= 1)',
+      "ALTER TABLE ${DatabaseTables.transactions} ADD COLUMN match_status TEXT NOT NULL DEFAULT 'unmatched' CHECK (match_status IN ('unmatched', 'suggested', 'reconciled'))",
+    ];
+    for (final String statement in statements) {
+      await db.execute(statement);
+    }
+
+    // Preserve the meaning of legacy rows that were already reconciled before
+    // the confidence/status columns existed.
+    await db.execute(
+      "UPDATE ${DatabaseTables.transactions} "
+      "SET match_status = 'reconciled', match_confidence = 1 "
+      'WHERE reconciled = 1 AND document_id IS NOT NULL',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_transactions_match_status '
+      'ON ${DatabaseTables.transactions} (company_id, match_status)',
     );
   }
 

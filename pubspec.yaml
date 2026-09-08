@@ -26,6 +26,10 @@ dependencies:
   # Functional error handling.
   dartz: ^0.10.1
 
+  # Bank statement import formats.
+  csv: ^8.0.0
+  excel: ^4.0.6
+
   # Presentation and typography.
   google_fonts: ^8.2.1
   flutter_svg: ^2.3.0

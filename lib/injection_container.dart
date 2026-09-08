@@ -20,6 +20,7 @@ import 'features/company/presentation/bloc/company_bloc.dart';
 import 'features/document_ocr/data/document_data.dart';
 import 'features/document_ocr/domain/document_domain.dart';
 import 'features/document_ocr/presentation/bloc/document_ocr_bloc.dart';
+import 'features/reconciliation/reconciliation.dart';
 import 'features/tax_copilot/data/tax_copilot_data.dart';
 import 'features/tax_copilot/domain/tax_domain.dart';
 import 'features/tax_copilot/presentation/bloc/tax_copilot_bloc.dart';
@@ -113,6 +114,26 @@ Future<void> init({EnvConfig? environment}) async {
   if (!sl.isRegistered<DocumentOcrBloc>()) {
     sl.registerFactory<DocumentOcrBloc>(
       () => DocumentOcrBloc(repository: sl<DocumentRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<ReconciliationLocalDataSource>()) {
+    sl.registerLazySingleton<ReconciliationLocalDataSource>(
+      () => ReconciliationLocalDataSourceImpl(sl<DatabaseService>()),
+    );
+  }
+
+  if (!sl.isRegistered<MatchingEngine>()) {
+    sl.registerLazySingleton<MatchingEngine>(() => const MatchingEngine());
+  }
+
+  if (!sl.isRegistered<ReconciliationRepository>()) {
+    sl.registerLazySingleton<ReconciliationRepository>(
+      () => ReconciliationRepositoryImpl(
+        sl<ReconciliationLocalDataSource>(),
+        sl<DocumentLocalDataSource>(),
+        matchingEngine: sl<MatchingEngine>(),
+      ),
     );
   }
 
