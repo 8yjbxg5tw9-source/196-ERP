@@ -9,6 +9,7 @@ import 'config/theme/app_theme.dart';
 import 'features/company/presentation/bloc/company_bloc.dart';
 import 'features/company/presentation/bloc/company_event.dart';
 import 'features/document_ocr/domain/repositories/document_repository.dart';
+import 'features/tax_copilot/domain/repositories/tax_copilot_repository.dart';
 import 'injection_container.dart';
 import 'shared/widgets/app_shell.dart';
 
@@ -83,22 +84,25 @@ class _FinAiAppState extends State<FinAiApp> {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider<DocumentRepository>.value(
-      value: sl<DocumentRepository>(),
-      child: BlocProvider<CompanyBloc>(
-        create: (_) => sl<CompanyBloc>()..add(const LoadCompaniesEvent()),
-        child: MaterialApp(
-          title: _windowTitle,
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: _themeMode,
-          home: AppShell(
-            config: widget.config,
+    return RepositoryProvider<TaxCopilotRepository>.value(
+      value: sl<TaxCopilotRepository>(),
+      child: RepositoryProvider<DocumentRepository>.value(
+        value: sl<DocumentRepository>(),
+        child: BlocProvider<CompanyBloc>(
+          create: (_) => sl<CompanyBloc>()..add(const LoadCompaniesEvent()),
+          child: MaterialApp(
+            title: _windowTitle,
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
             themeMode: _themeMode,
-            onToggleTheme: _toggleTheme,
+            home: AppShell(
+              config: widget.config,
+              themeMode: _themeMode,
+              onToggleTheme: _toggleTheme,
+            ),
+            onGenerateRoute: AppRouter.onGenerateRoute,
           ),
-          onGenerateRoute: AppRouter.onGenerateRoute,
         ),
       ),
     );

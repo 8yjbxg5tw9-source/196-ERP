@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -12,9 +13,16 @@ import '../models/document_model.dart';
 abstract interface class DocumentLocalDataSource {
   Future<List<DocumentModel>> getDocuments(String companyId);
 
+  Future<DocumentModel?> getDocument(String documentId);
+
   Future<DocumentModel> createDocument(DocumentModel document);
 
   Future<void> updateDocument(DocumentModel document);
+
+  Future<void> saveApprovedDocument(
+    DocumentModel document, {
+    required Map<String, dynamic> auditDetails,
+  });
 
   Future<void> deleteDocument(String documentId);
 
@@ -36,6 +44,18 @@ class DocumentLocalDataSourceImpl implements DocumentLocalDataSource {
       orderBy: 'created_at DESC',
     );
     return rows.map(DocumentModel.fromSqflite).toList(growable: false);
+  }
+
+  @override
+  Future<DocumentModel?> getDocument(String documentId) async {
+    final Database database = await _databaseService.database;
+    final List<Map<String, Object?>> rows = await database.query(
+      DatabaseTables.documents,
+      where: 'id = ?',
+      whereArgs: <Object?>[documentId],
+      limit: 1,
+    );
+    return rows.isEmpty ? null : DocumentModel.fromSqflite(rows.first);
   }
 
   @override
@@ -61,6 +81,36 @@ class DocumentLocalDataSourceImpl implements DocumentLocalDataSource {
     if (updatedRows == 0) {
       throw StateError('Cannot update an unknown document: ${document.id}');
     }
+  }
+
+  @override
+  Future<void> saveApprovedDocument(
+    DocumentModel document, {
+    required Map<String, dynamic> auditDetails,
+  }) async {
+    final Database database = await _databaseService.database;
+    await database.transaction((Transaction transaction) async {
+      final int updatedRows = await transaction.update(
+        DatabaseTables.documents,
+        document.toSqflite(),
+        where: 'id = ?',
+        whereArgs: <Object?>[document.id],
+      );
+      if (updatedRows == 0) {
+        throw StateError('Cannot approve an unknown document: ${document.id}');
+      }
+
+      await transaction.insert(
+        DatabaseTables.auditLogs,
+        <String, Object?>{
+          'id': _newAuditId(),
+          'action': 'document_approved',
+          'timestamp': DateTime.now().toUtc().toIso8601String(),
+          'details': jsonEncode(auditDetails),
+        },
+        conflictAlgorithm: ConflictAlgorithm.abort,
+      );
+    });
   }
 
   @override
@@ -131,6 +181,10 @@ class DocumentLocalDataSourceImpl implements DocumentLocalDataSource {
     if (await file.exists()) {
       await file.delete();
     }
+  }
+
+  String _newAuditId() {
+    return 'audit-${DateTime.now().toUtc().microsecondsSinceEpoch}';
   }
 
   String _safeSegment(String value) {

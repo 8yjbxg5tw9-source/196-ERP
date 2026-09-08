@@ -16,6 +16,7 @@ class DocumentModel extends DocumentEntity {
     super.vendorVoen,
     super.invoiceNumber,
     super.issueDate,
+    super.dueDate,
     super.subtotal,
     super.vatAmount,
     super.totalAmount,
@@ -23,11 +24,8 @@ class DocumentModel extends DocumentEntity {
     super.currency,
     super.status,
     super.lineItems,
-    this.extractedData,
+    super.extractedData,
   });
-
-  /// Raw OCR payload retained for auditability and future re-processing.
-  final Map<String, dynamic>? extractedData;
 
   factory DocumentModel.fromJson(Map<String, dynamic> json) {
     final String filePath = _requiredString(
@@ -51,6 +49,9 @@ class DocumentModel extends DocumentEntity {
       ),
       issueDate: _optionalDateTime(
         _firstValue(json, <String>['issueDate', 'issue_date']),
+      ),
+      dueDate: _optionalDateTime(
+        _firstValue(json, <String>['dueDate', 'due_date']),
       ),
       subtotal: _optionalDouble(json, <String>['subtotal']),
       vatAmount: _optionalDouble(json, <String>['vatAmount', 'vat_amount']),
@@ -87,6 +88,7 @@ class DocumentModel extends DocumentEntity {
       vendorVoen: _optionalRowString(row, 'vendor_voen'),
       invoiceNumber: _optionalRowString(row, 'invoice_number'),
       issueDate: _optionalDateTime(row['issue_date']),
+      dueDate: _optionalDateTime(row['due_date']),
       subtotal: _rowDouble(row['subtotal']),
       vatAmount: _rowDouble(row['vat_amount']),
       totalAmount: _rowDouble(row['total_amount']),
@@ -132,6 +134,10 @@ class DocumentModel extends DocumentEntity {
             _firstValue(structured, <String>['issueDate', 'issue_date']),
           ) ??
           base.issueDate,
+      dueDate: _optionalDateTime(
+            _firstValue(structured, <String>['dueDate', 'due_date']),
+          ) ??
+          base.dueDate,
       subtotal: _optionalDouble(structured, <String>['subtotal']) ??
           base.subtotal,
       vatAmount: _optionalDouble(
@@ -168,6 +174,7 @@ class DocumentModel extends DocumentEntity {
       'vendor_voen': vendorVoen,
       'invoice_number': invoiceNumber,
       'issue_date': issueDate?.toUtc().toIso8601String(),
+      'due_date': dueDate?.toUtc().toIso8601String(),
       'subtotal': subtotal,
       'vat_amount': vatAmount,
       'total_amount': totalAmount,
@@ -191,6 +198,7 @@ class DocumentModel extends DocumentEntity {
       'vendor_voen': vendorVoen,
       'invoice_number': invoiceNumber,
       'issue_date': issueDate?.toUtc().toIso8601String(),
+      'due_date': dueDate?.toUtc().toIso8601String(),
       'subtotal': subtotal,
       // Version 1/2 databases declared these legacy columns NOT NULL.
       'vat_amount': vatAmount ?? 0,
@@ -216,6 +224,7 @@ class DocumentModel extends DocumentEntity {
       vendorVoen: vendorVoen,
       invoiceNumber: invoiceNumber,
       issueDate: issueDate,
+      dueDate: dueDate,
       subtotal: subtotal,
       vatAmount: vatAmount,
       totalAmount: totalAmount,
@@ -227,8 +236,73 @@ class DocumentModel extends DocumentEntity {
     );
   }
 
+  /// Refreshes the structured section of the retained OCR payload after an
+  /// accountant edits fields in the verification workspace.
+  DocumentModel withVerificationData() {
+    final Map<String, dynamic> payload = <String, dynamic>{
+      ...?extractedData,
+    };
+    final Map<String, dynamic> structured = <String, dynamic>{
+      ...?_asMap(payload['structured']),
+    };
+    _writeOrRemove(structured, 'vendorName', vendorName);
+    _writeOrRemove(structured, 'vendorVoen', vendorVoen);
+    _writeOrRemove(structured, 'invoiceNumber', invoiceNumber);
+    _writeOrRemove(
+      structured,
+      'issueDate',
+      issueDate?.toUtc().toIso8601String(),
+    );
+    _writeOrRemove(
+      structured,
+      'dueDate',
+      dueDate?.toUtc().toIso8601String(),
+    );
+    _writeOrRemove(structured, 'subtotal', subtotal);
+    _writeOrRemove(structured, 'vatAmount', vatAmount);
+    _writeOrRemove(structured, 'totalAmount', totalAmount);
+    _writeOrRemove(structured, 'currency', currency);
+    structured['lineItems'] = lineItems.map(_itemToJson).toList(growable: false);
+    payload['structured'] = structured;
+    payload['verified'] = true;
+    payload['verifiedAt'] = DateTime.now().toUtc().toIso8601String();
+
+    return DocumentModel(
+      id: id,
+      companyId: companyId,
+      filePath: filePath,
+      fileName: fileName,
+      vendorName: vendorName,
+      vendorVoen: vendorVoen,
+      invoiceNumber: invoiceNumber,
+      issueDate: issueDate,
+      dueDate: dueDate,
+      subtotal: subtotal,
+      vatAmount: vatAmount,
+      totalAmount: totalAmount,
+      createdAt: createdAt,
+      currency: currency,
+      status: status,
+      lineItems: lineItems,
+      extractedData: payload,
+    );
+  }
+
+  static void _writeOrRemove(
+    Map<String, dynamic> values,
+    String key,
+    Object? value,
+  ) {
+    if (value == null || (value is String && value.trim().isEmpty)) {
+      values.remove(key);
+    } else {
+      values[key] = value;
+    }
+  }
+
   static Map<String, dynamic> _itemToJson(InvoiceItemEntity item) {
     return <String, dynamic>{
+      'id': item.id,
       'description': item.description,
       'quantity': item.quantity,
       'unit_price': item.unitPrice,
@@ -257,6 +331,11 @@ class DocumentModel extends DocumentEntity {
       return null;
     }
     return InvoiceItemEntity(
+      id: _readString(
+        map,
+        <String>['id'],
+        fallback: '',
+      ),
       description: _readString(
         map,
         <String>['description', 'name'],

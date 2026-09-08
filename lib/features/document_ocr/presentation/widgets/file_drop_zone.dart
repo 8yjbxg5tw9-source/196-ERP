@@ -20,7 +20,12 @@ const Set<String> _supportedExtensions = <String>{
 
 /// Desktop drag-and-drop ingestion surface with a native picker fallback.
 class FileDropZone extends StatefulWidget {
-  const FileDropZone({super.key});
+  const FileDropZone({
+    this.onDocumentProcessed,
+    super.key,
+  });
+
+  final ValueChanged<DocumentEntity>? onDocumentProcessed;
 
   @override
   State<FileDropZone> createState() => _FileDropZoneState();
@@ -213,6 +218,7 @@ class _FileDropZoneState extends State<FileDropZone> {
     });
 
     final DocumentRepository repository = context.read<DocumentRepository>();
+    bool openedDocument = false;
     for (int index = 0; index < files.length; index++) {
       if (!mounted) {
         return;
@@ -237,6 +243,10 @@ class _FileDropZoneState extends State<FileDropZone> {
                 : _FileStatus.failed,
             document.status.name,
           );
+          if (document.status == DocumentStatus.completed && !openedDocument) {
+            openedDocument = true;
+            widget.onDocumentProcessed?.call(document);
+          }
         },
       );
     }

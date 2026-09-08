@@ -136,7 +136,16 @@ abstract final class OcrTextParser {
     final String? issueDate = _firstCapture(
       combinedText,
       RegExp(
-        r'(?:issue\s*date|date|tarix|invoice\s*date)'
+        r'(?:^|\n)\s*(?:issue\s*date|date|tarix|invoice\s*date)'
+        r'\s*[:#-]?\s*([0-9]{1,4}[./-][0-9]{1,2}[./-][0-9]{1,4})',
+        caseSensitive: false,
+      ),
+    );
+    final String? dueDate = _firstCapture(
+      combinedText,
+      RegExp(
+        r'(?:^|\n)\s*(?:due\s*date|payment\s*due|son\s*ödəniş\s*tarixi|'
+        r'odəniş\s*tarixi|ödəmə\s*tarixi)'
         r'\s*[:#-]?\s*([0-9]{1,4}[./-][0-9]{1,2}[./-][0-9]{1,4})',
         caseSensitive: false,
       ),
@@ -153,6 +162,9 @@ abstract final class OcrTextParser {
     }
     if (issueDate != null) {
       structured['issueDate'] = issueDate;
+    }
+    if (dueDate != null) {
+      structured['dueDate'] = dueDate;
     }
 
     final double? subtotal = _amountAfterLabel(
@@ -314,6 +326,7 @@ abstract final class OcrTextParser {
         continue;
       }
       items.add(<String, dynamic>{
+        'id': 'ocr-line-${items.length + 1}',
         'description': match.group(2)!.trim(),
         'quantity': quantity,
         'unitPrice': lineTotal / quantity,

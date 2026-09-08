@@ -20,6 +20,7 @@ class DocumentEntity extends Equatable {
     this.vendorVoen,
     this.invoiceNumber,
     this.issueDate,
+    this.dueDate,
     this.subtotal,
     this.vatAmount,
     this.totalAmount,
@@ -27,6 +28,7 @@ class DocumentEntity extends Equatable {
     this.currency = 'AZN',
     this.status = DocumentStatus.pending,
     this.lineItems = const <InvoiceItemEntity>[],
+    this.extractedData,
   });
 
   final String id;
@@ -37,6 +39,7 @@ class DocumentEntity extends Equatable {
   final String? vendorVoen;
   final String? invoiceNumber;
   final DateTime? issueDate;
+  final DateTime? dueDate;
   final double? subtotal;
   final double? vatAmount;
   final double? totalAmount;
@@ -44,6 +47,7 @@ class DocumentEntity extends Equatable {
   final String currency;
   final DocumentStatus status;
   final List<InvoiceItemEntity> lineItems;
+  final Map<String, dynamic>? extractedData;
 
   @override
   List<Object?> get props => <Object?>[
@@ -55,6 +59,7 @@ class DocumentEntity extends Equatable {
         vendorVoen,
         invoiceNumber,
         issueDate,
+        dueDate,
         subtotal,
         vatAmount,
         totalAmount,
@@ -62,5 +67,6 @@ class DocumentEntity extends Equatable {
         currency,
         status,
         lineItems,
+        extractedData,
       ];
 }

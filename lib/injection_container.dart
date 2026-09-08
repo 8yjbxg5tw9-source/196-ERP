@@ -19,6 +19,10 @@ import 'features/company/domain/company_domain.dart';
 import 'features/company/presentation/bloc/company_bloc.dart';
 import 'features/document_ocr/data/document_data.dart';
 import 'features/document_ocr/domain/document_domain.dart';
+import 'features/document_ocr/presentation/bloc/document_ocr_bloc.dart';
+import 'features/tax_copilot/data/tax_copilot_data.dart';
+import 'features/tax_copilot/domain/tax_domain.dart';
+import 'features/tax_copilot/presentation/bloc/tax_copilot_bloc.dart';
 
 /// Global, type-safe service locator.
 final GetIt sl = GetIt.instance;
@@ -103,6 +107,42 @@ Future<void> init({EnvConfig? environment}) async {
         sl<DocumentLocalDataSource>(),
         sl<OcrService>(),
       ),
+    );
+  }
+
+  if (!sl.isRegistered<DocumentOcrBloc>()) {
+    sl.registerFactory<DocumentOcrBloc>(
+      () => DocumentOcrBloc(repository: sl<DocumentRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<TaxCopilotLocalDataSource>()) {
+    sl.registerLazySingleton<TaxCopilotLocalDataSource>(
+      () => TaxCopilotLocalDataSourceImpl(sl<DatabaseService>()),
+    );
+  }
+
+  if (!sl.isRegistered<LlmRemoteDataSource>()) {
+    sl.registerLazySingleton<LlmRemoteDataSource>(
+      () => LlmRemoteDataSourceImpl(
+        sl<ApiClient>(),
+        sl<SecureStorageService>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<TaxCopilotRepository>()) {
+    sl.registerLazySingleton<TaxCopilotRepository>(
+      () => TaxCopilotRepositoryImpl(
+        sl<TaxCopilotLocalDataSource>(),
+        sl<LlmRemoteDataSource>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<TaxCopilotBloc>()) {
+    sl.registerFactory<TaxCopilotBloc>(
+      () => TaxCopilotBloc(repository: sl<TaxCopilotRepository>()),
     );
   }
 

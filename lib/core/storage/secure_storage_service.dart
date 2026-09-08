@@ -5,6 +5,9 @@ abstract final class SecureStorageKeys {
   static const String authorizationToken = 'authorization_token';
   static const String refreshToken = 'refresh_token';
   static const String localAiApiKey = 'local_ai_api_key';
+  static const String openAiApiKey = 'openai_api_key';
+  static const String anthropicApiKey = 'anthropic_api_key';
+  static const String llmProvider = 'llm_provider';
   static const String databaseEncryptionKey = 'database_encryption_key';
   static const String activeCompanyId = 'active_company_id';
 }

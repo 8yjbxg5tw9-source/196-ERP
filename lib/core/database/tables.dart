@@ -10,6 +10,7 @@ abstract final class DatabaseTables {
   static const String transactions = 'transactions';
   static const String taxRules = 'tax_rules';
   static const String auditLogs = 'audit_logs';
+  static const String taxQueries = 'tax_queries';
 
   static const String createCompanies = '''
 CREATE TABLE companies (
@@ -33,6 +34,7 @@ CREATE TABLE documents (
   vendor_voen TEXT,
   invoice_number TEXT,
   issue_date TIMESTAMP,
+  due_date TIMESTAMP,
   subtotal REAL,
   total_amount REAL,
   vat_amount REAL,
@@ -64,8 +66,22 @@ CREATE TABLE tax_rules (
   id TEXT PRIMARY KEY NOT NULL,
   article_code TEXT NOT NULL,
   title TEXT NOT NULL,
-  description TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT 'tax',
   embedding_vector BLOB
+)
+''';
+
+  static const String createTaxQueries = '''
+CREATE TABLE tax_queries (
+  id TEXT PRIMARY KEY NOT NULL,
+  company_id TEXT NOT NULL,
+  question TEXT NOT NULL,
+  answer TEXT NOT NULL,
+  cited_articles_json TEXT NOT NULL,
+  timestamp TIMESTAMP NOT NULL,
+  FOREIGN KEY (company_id) REFERENCES companies (id) ON DELETE CASCADE
 )
 ''';
 
@@ -91,6 +107,7 @@ CREATE TABLE audit_logs (
     'CREATE INDEX idx_tax_rules_article_code ON tax_rules (article_code)',
     'CREATE INDEX idx_audit_logs_timestamp ON audit_logs (timestamp)',
     'CREATE INDEX idx_audit_logs_action ON audit_logs (action)',
+    'CREATE INDEX idx_tax_queries_company_timestamp ON tax_queries (company_id, timestamp)',
   ];
 
   static const List<String> createTables = <String>[
@@ -99,5 +116,6 @@ CREATE TABLE audit_logs (
     createTransactions,
     createTaxRules,
     createAuditLogs,
+    createTaxQueries,
   ];
 }

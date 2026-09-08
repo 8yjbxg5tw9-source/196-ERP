@@ -9,6 +9,7 @@ import 'package:sqflite/sqflite.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/services/ocr_service.dart';
 import '../../domain/entities/document_entity.dart';
+import '../../domain/entities/invoice_item_entity.dart';
 import '../../domain/repositories/document_repository.dart';
 import '../datasources/document_local_data_source.dart';
 import '../models/document_model.dart';
@@ -39,6 +40,36 @@ class DocumentRepositoryImpl implements DocumentRepository {
       return Left<Failure, List<DocumentEntity>>(
         CacheFailure(
           message: 'Saved documents could not be read.',
+          cause: error,
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, DocumentEntity>> getDocument(
+    String documentId,
+  ) async {
+    try {
+      final DocumentModel? document =
+          await _localDataSource.getDocument(documentId);
+      if (document == null) {
+        return Left<Failure, DocumentEntity>(
+          NotFoundFailure(message: 'The document could not be found.'),
+        );
+      }
+      return Right<Failure, DocumentEntity>(document);
+    } on DatabaseException catch (error) {
+      return Left<Failure, DocumentEntity>(
+        DatabaseFailure(
+          message: 'The document could not be loaded from SQLite.',
+          cause: error,
+        ),
+      );
+    } on Object catch (error) {
+      return Left<Failure, DocumentEntity>(
+        CacheFailure(
+          message: 'The document could not be read locally.',
           cause: error,
         ),
       );
@@ -126,6 +157,87 @@ class DocumentRepositoryImpl implements DocumentRepository {
       return Left<Failure, DocumentEntity>(
         ParsingFailure(
           message: 'Document OCR processing failed.',
+          cause: error,
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, DocumentEntity>> saveAndApproveDocument(
+    DocumentEntity document,
+  ) async {
+    try {
+      final DocumentModel model = document is DocumentModel
+          ? document
+          : DocumentModel(
+              id: document.id,
+              companyId: document.companyId,
+              filePath: document.filePath,
+              fileName: document.fileName,
+              vendorName: document.vendorName,
+              vendorVoen: document.vendorVoen,
+              invoiceNumber: document.invoiceNumber,
+              issueDate: document.issueDate,
+              dueDate: document.dueDate,
+              subtotal: document.subtotal,
+              vatAmount: document.vatAmount,
+              totalAmount: document.totalAmount,
+              createdAt: document.createdAt,
+              currency: document.currency,
+              status: document.status,
+              lineItems: document.lineItems,
+              extractedData: document.extractedData,
+            );
+      final DocumentModel approved = model
+          .withVerificationData()
+          .withStatus(DocumentStatus.completed);
+      await _localDataSource.saveApprovedDocument(
+        approved,
+        auditDetails: <String, dynamic>{
+          'documentId': approved.id,
+          'companyId': approved.companyId,
+          'status': approved.status.name,
+          'fileName': approved.fileName,
+          'invoiceNumber': approved.invoiceNumber,
+          'vendorVoen': approved.vendorVoen,
+          'issueDate': approved.issueDate?.toUtc().toIso8601String(),
+          'dueDate': approved.dueDate?.toUtc().toIso8601String(),
+          'subtotal': approved.subtotal,
+          'vatAmount': approved.vatAmount,
+          'totalAmount': approved.totalAmount,
+          'currency': approved.currency,
+          'lineItems': approved.lineItems
+              .map((InvoiceItemEntity item) => <String, dynamic>{
+                    'id': item.id,
+                    'description': item.description,
+                    'quantity': item.quantity,
+                    'unitPrice': item.unitPrice,
+                    'vatRate': item.vatRate,
+                    'lineTotal': item.lineTotal,
+                  })
+              .toList(growable: false),
+        },
+      );
+      return Right<Failure, DocumentEntity>(approved);
+    } on DatabaseException catch (error) {
+      return Left<Failure, DocumentEntity>(
+        DatabaseFailure(
+          message: 'The approved document could not be saved to SQLite.',
+          cause: error,
+        ),
+      );
+    } on FormatException catch (error) {
+      return Left<Failure, DocumentEntity>(
+        ParsingFailure(
+          message: 'The edited document could not be serialized.',
+          cause: error,
+        ),
+      );
+    } on Object catch (error) {
+      return Left<Failure, DocumentEntity>(
+        CacheFailure(
+          message: 'The approved document could not be saved locally.',
           cause: error,
         ),
       );

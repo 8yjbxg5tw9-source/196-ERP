@@ -11,9 +11,15 @@ abstract interface class DocumentRepository {
     String companyId,
   );
 
+  Future<Either<Failure, DocumentEntity>> getDocument(String documentId);
+
   Future<Either<Failure, DocumentEntity>> processDocument(
     File file,
     String companyId,
+  );
+
+  Future<Either<Failure, DocumentEntity>> saveAndApproveDocument(
+    DocumentEntity document,
   );
 
   Future<Either<Failure, void>> deleteDocument(String documentId);

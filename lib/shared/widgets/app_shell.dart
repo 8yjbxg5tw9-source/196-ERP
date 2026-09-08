@@ -6,12 +6,26 @@ import 'package:window_manager/window_manager.dart';
 
 import '../../config/env/env_config.dart';
 import '../../features/company/presentation/widgets/company_selector_dropdown.dart';
+import '../../features/document_ocr/domain/entities/document_entity.dart';
+import '../../features/document_ocr/presentation/pages/document_verification_page.dart';
 import '../../features/document_ocr/presentation/widgets/file_drop_zone.dart';
+import '../../features/tax_copilot/presentation/pages/tax_copilot_page.dart';
 
 const double _expandedSidebarWidth = 248;
 const double _collapsedSidebarWidth = 76;
 const double _mobileBreakpoint = 760;
 const double _compactSidebarBreakpoint = 1100;
+
+Future<void> _openDocumentVerification(
+  BuildContext context,
+  String documentId,
+) async {
+  await Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      builder: (_) => DocumentVerificationPage(documentId: documentId),
+    ),
+  );
+}
 
 const List<_NavigationDestination> _navigationDestinations =
     <_NavigationDestination>[
@@ -607,18 +621,8 @@ class _AppShellState extends State<AppShell> with WindowListener {
   List<Widget> _buildDefaultViews() {
     return <Widget>[
       const _DashboardView(),
-      const _FeatureOverviewView(
-        icon: Icons.document_scanner_rounded,
-        title: 'OCR Invoice Workspace',
-        subtitle: 'Capture, validate, and route invoices with confidence.',
-        status: 'Ready for intake',
-      ),
-      const _FeatureOverviewView(
-        icon: Icons.auto_awesome,
-        title: 'Tax Copilot',
-        subtitle: 'Ask explainable questions about tax exposure and filings.',
-        status: 'AI assistant online',
-      ),
+      const DocumentVerificationPage(),
+      const TaxCopilotPage(),
       const _FeatureOverviewView(
         icon: Icons.compare_arrows_rounded,
         title: 'Reconciliation Center',
@@ -821,7 +825,13 @@ class _DashboardView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-          const FileDropZone(),
+          FileDropZone(
+            onDocumentProcessed: (DocumentEntity document) {
+              unawaited(
+                _openDocumentVerification(context, document.id),
+              );
+            },
+          ),
           const SizedBox(height: 22),
           LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {

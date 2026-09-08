@@ -15,7 +15,7 @@ import 'tables.dart';
 class DatabaseService {
   DatabaseService({this.databaseName = 'finai_studio.db'});
 
-  static const int currentSchemaVersion = 3;
+  static const int currentSchemaVersion = 5;
 
   final String databaseName;
   Future<Database>? _databaseFuture;
@@ -123,6 +123,10 @@ class DatabaseService {
           );
         case 3:
           await _migrateDocumentsToVersion3(db);
+        case 4:
+          await _migrateDocumentsToVersion4(db);
+        case 5:
+          await _migrateTaxCopilotToVersion5(db);
         default:
           debugPrint(
             '[DatabaseService] No migration registered for schema version '
@@ -150,6 +154,32 @@ class DatabaseService {
     for (final String statement in statements) {
       await db.execute(statement);
     }
+  }
+
+  Future<void> _migrateDocumentsToVersion4(Database db) async {
+    await db.execute(
+      'ALTER TABLE ${DatabaseTables.documents} ADD COLUMN due_date TIMESTAMP',
+    );
+  }
+
+  Future<void> _migrateTaxCopilotToVersion5(Database db) async {
+    await db.execute(
+      "ALTER TABLE ${DatabaseTables.taxRules} "
+      "ADD COLUMN content TEXT NOT NULL DEFAULT ''",
+    );
+    await db.execute(
+      "ALTER TABLE ${DatabaseTables.taxRules} "
+      "ADD COLUMN category TEXT NOT NULL DEFAULT 'tax'",
+    );
+    await db.execute(
+      'UPDATE ${DatabaseTables.taxRules} '
+      'SET content = description WHERE content = \'\'',
+    );
+    await db.execute(DatabaseTables.createTaxQueries);
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_tax_queries_company_timestamp '
+      'ON ${DatabaseTables.taxQueries} (company_id, timestamp)',
+    );
   }
 
   Future<void> _createSchema(Database db) async {
