@@ -34,6 +34,9 @@ dependencies:
   shared_preferences: ^2.5.5
   flutter_secure_storage: ^11.0.0
 
+  # Desktop window lifecycle, sizing, and custom title bars.
+  window_manager: ^0.5.2
+
   # Locale-aware number and date formatting.
   intl: ^0.20.3
 
