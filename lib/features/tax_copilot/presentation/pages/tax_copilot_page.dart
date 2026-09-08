@@ -274,18 +274,22 @@ class _TaxCopilotWorkspaceState extends State<_TaxCopilotWorkspace> {
                           controller: _questionController,
                           chatScrollController: _chatScrollController,
                           hasCompany: hasCompany,
-                          onSubmit: _submitQuestion,
-                          onPromptSelected: _submitQuestion,
+                          onSubmit: () => _submitQuestion(),
+                          onPromptSelected: (String prompt) =>
+                              _submitQuestion(prompt),
                           onAttach: _attachDocument,
                           attachedFileName: _attachedFileName,
                           onRemoveAttachment: () =>
                               setState(() => _attachedFileName = null),
-                          onCitation: (String articleCode) =>
+                          onCitation: (String articleCode) {
+                            unawaited(
                               showCitationArticleDrawer(
-                            context: context,
-                            repository: widget.repository,
-                            articleCode: articleCode,
-                          ),
+                                context: context,
+                                repository: widget.repository,
+                                articleCode: articleCode,
+                              ),
+                            );
+                          },
                           onStreamProgress: _scheduleScrollToBottom,
                         ),
                       ),
@@ -321,18 +325,22 @@ class _TaxCopilotWorkspaceState extends State<_TaxCopilotWorkspace> {
                         controller: _questionController,
                         chatScrollController: _chatScrollController,
                         hasCompany: hasCompany,
-                        onSubmit: _submitQuestion,
-                        onPromptSelected: _submitQuestion,
+                        onSubmit: () => _submitQuestion(),
+                        onPromptSelected: (String prompt) =>
+                            _submitQuestion(prompt),
                         onAttach: _attachDocument,
                         attachedFileName: _attachedFileName,
                         onRemoveAttachment: () =>
                             setState(() => _attachedFileName = null),
-                        onCitation: (String articleCode) =>
+                        onCitation: (String articleCode) {
+                          unawaited(
                             showCitationArticleDrawer(
-                          context: context,
-                          repository: widget.repository,
-                          articleCode: articleCode,
-                        ),
+                              context: context,
+                              repository: widget.repository,
+                              articleCode: articleCode,
+                            ),
+                          );
+                        },
                         onStreamProgress: _scheduleScrollToBottom,
                       ),
                     ),
