@@ -1,10 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'config/env/env_config.dart';
 import 'config/routes/app_router.dart';
 import 'config/theme/app_theme.dart';
+import 'features/company/presentation/bloc/company_bloc.dart';
+import 'features/company/presentation/bloc/company_event.dart';
 import 'injection_container.dart';
 import 'shared/widgets/app_shell.dart';
 
@@ -79,18 +82,21 @@ class _FinAiAppState extends State<FinAiApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: _windowTitle,
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: _themeMode,
-      home: AppShell(
-        config: widget.config,
+    return BlocProvider<CompanyBloc>(
+      create: (_) => sl<CompanyBloc>()..add(const LoadCompaniesEvent()),
+      child: MaterialApp(
+        title: _windowTitle,
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
         themeMode: _themeMode,
-        onToggleTheme: _toggleTheme,
+        home: AppShell(
+          config: widget.config,
+          themeMode: _themeMode,
+          onToggleTheme: _toggleTheme,
+        ),
+        onGenerateRoute: AppRouter.onGenerateRoute,
       ),
-      onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
 }

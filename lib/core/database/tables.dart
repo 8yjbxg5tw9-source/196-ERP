@@ -16,6 +16,7 @@ CREATE TABLE companies (
   id TEXT PRIMARY KEY NOT NULL,
   name TEXT NOT NULL,
   voen_tin TEXT NOT NULL UNIQUE,
+  tax_type TEXT NOT NULL DEFAULT 'VAT',
   created_at TIMESTAMP NOT NULL
 )
 ''';

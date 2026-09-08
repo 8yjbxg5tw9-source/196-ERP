@@ -12,6 +12,7 @@ FinAI Studio is an enterprise-grade AI financial and accounting platform built w
 - `lib/core/database/` — versioned offline-first SQLite service and relational schema for companies, documents, transactions, tax rules, and audit logs.
 - `lib/core/storage/` — platform-backed encrypted key-value storage for tokens, AI keys, and database key material.
 - `lib/core/network/` — connectivity-gated Dio client with secure auth headers, masked debug logging, exponential retries, and normalized domain failures.
+- `lib/features/company/` — multi-company domain contracts, SQLite repository, secure active-company context, BLoC state engine, and desktop selector form.
 - `window_manager` — desktop window sizing, custom title bar behavior, native controls, and lifecycle hooks.
 
 ## Run

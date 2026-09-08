@@ -15,7 +15,7 @@ import 'tables.dart';
 class DatabaseService {
   DatabaseService({this.databaseName = 'finai_studio.db'});
 
-  static const int currentSchemaVersion = 1;
+  static const int currentSchemaVersion = 2;
 
   final String databaseName;
   Future<Database>? _databaseFuture;
@@ -116,6 +116,11 @@ class DatabaseService {
       switch (version) {
         case 1:
           await _createSchema(db);
+        case 2:
+          await db.execute(
+            'ALTER TABLE ${DatabaseTables.companies} '
+            'ADD COLUMN tax_type TEXT NOT NULL DEFAULT \'VAT\'',
+          );
         default:
           debugPrint(
             '[DatabaseService] No migration registered for schema version '

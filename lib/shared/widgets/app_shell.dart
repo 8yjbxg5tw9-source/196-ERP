@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../config/env/env_config.dart';
+import '../../features/company/presentation/widgets/company_selector_dropdown.dart';
 
 const double _expandedSidebarWidth = 248;
 const double _collapsedSidebarWidth = 76;
@@ -70,7 +71,6 @@ class _AppShellState extends State<AppShell> with WindowListener {
   int _selectedIndex = 0;
   bool _sidebarExpanded = true;
   bool _isWindowMaximized = false;
-  String _selectedProfile = 'Finance Team';
   late final bool _nativeDesktop;
   late final List<Widget> _views;
 
@@ -125,10 +125,6 @@ class _AppShellState extends State<AppShell> with WindowListener {
 
   void _toggleSidebar() {
     setState(() => _sidebarExpanded = !_sidebarExpanded);
-  }
-
-  void _selectProfile(String profile) {
-    setState(() => _selectedProfile = profile);
   }
 
   @override
@@ -434,7 +430,7 @@ class _AppShellState extends State<AppShell> with WindowListener {
                 ),
               ),
             ),
-            if (!compact) _buildProfileSwitcher(context),
+            if (!compact) const CompanySelectorDropdown(),
             _buildSyncStatus(context, compact: compact),
             _buildNotificationButton(context),
             IconButton(
@@ -450,64 +446,6 @@ class _AppShellState extends State<AppShell> with WindowListener {
             ),
             if (_nativeDesktop) _buildWindowControls(context),
             const SizedBox(width: 8),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileSwitcher(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final Color borderColor = theme.colorScheme.outline.withAlpha(100);
-
-    return PopupMenuButton<String>(
-      tooltip: 'Switch profile',
-      onSelected: _selectProfile,
-      itemBuilder: (BuildContext context) => const <PopupMenuEntry<String>>[
-        PopupMenuItem<String>(
-          value: 'Finance Team',
-          child: Text('Finance Team'),
-        ),
-        PopupMenuItem<String>(
-          value: 'Audit Workspace',
-          child: Text('Audit Workspace'),
-        ),
-        PopupMenuItem<String>(
-          value: 'Executive View',
-          child: Text('Executive View'),
-        ),
-      ],
-      child: Container(
-        margin: const EdgeInsets.only(left: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withAlpha(90),
-          border: Border.all(color: borderColor),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            CircleAvatar(
-              radius: 14,
-              backgroundColor: theme.colorScheme.secondary.withAlpha(30),
-              child: Text(
-                _selectedProfile.substring(0, 1),
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.secondary,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              _selectedProfile,
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Icon(Icons.unfold_more_rounded, size: 16),
           ],
         ),
       ),

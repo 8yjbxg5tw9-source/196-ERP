@@ -6,6 +6,7 @@ abstract final class SecureStorageKeys {
   static const String refreshToken = 'refresh_token';
   static const String localAiApiKey = 'local_ai_api_key';
   static const String databaseEncryptionKey = 'database_encryption_key';
+  static const String activeCompanyId = 'active_company_id';
 }
 
 /// Platform-agnostic contract for sensitive key-value data.

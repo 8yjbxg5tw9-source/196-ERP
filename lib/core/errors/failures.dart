@@ -72,6 +72,13 @@ class CacheFailure extends Failure {
   }) : super(message: message, cause: cause);
 }
 
+class DatabaseFailure extends Failure {
+  const DatabaseFailure({
+    String message = 'A database error occurred.',
+    Object? cause,
+  }) : super(message: message, cause: cause);
+}
+
 class NetworkFailure extends Failure {
   const NetworkFailure({
     String message = 'A network connection is unavailable.',
